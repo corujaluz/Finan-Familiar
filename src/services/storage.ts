@@ -1,4 +1,4 @@
-import { AlarmSettings, Category, CreditCardExpense, FamilyMember, IncomeSource, Transaction } from '../types/finance';
+import { AlarmSettings, Category, CreditCardExpense, FamilyMember, IncomeSource, Transaction, UserAccount } from '../types/finance';
 import { INITIAL_CATEGORIES, INITIAL_CREDIT_CARD_EXPENSES, INITIAL_INCOME_SOURCES, INITIAL_MEMBERS, INITIAL_TRANSACTIONS } from '../data/initialData';
 
 const STORAGE_KEYS = {
@@ -8,8 +8,33 @@ const STORAGE_KEYS = {
   INCOME_SOURCES: 'heckler_family_income_sources_v2',
   CREDIT_CARD_EXPENSES: 'heckler_family_credit_card_v2',
   ALARM_SETTINGS: 'heckler_family_alarm_settings_v2',
+  USER_ACCOUNTS: 'heckler_family_user_accounts_v2',
+  ACTIVE_USER_ID: 'heckler_family_active_user_v2',
   THEME: 'heckler_family_theme_v2',
 };
+
+export const DEFAULT_USER_ACCOUNTS: UserAccount[] = [
+  {
+    id: 'usr_eduardo',
+    username: 'eduardo',
+    name: 'Eduardo Heckler',
+    role: 'admin',
+    memberId: 'mem_eduardo',
+    pin: '1234',
+    avatarInitials: 'EH',
+    color: '#2563EB', // Blue
+  },
+  {
+    id: 'usr_graciela',
+    username: 'graciela',
+    name: 'Graciela Heckler',
+    role: 'user',
+    memberId: 'mem_graciela',
+    pin: '1234',
+    avatarInitials: 'GH',
+    color: '#059669', // Emerald
+  },
+];
 
 export const DEFAULT_ALARM_SETTINGS: AlarmSettings = {
   enabled: true,
@@ -29,6 +54,8 @@ export interface AppState {
   incomeSources: IncomeSource[];
   creditCardExpenses: CreditCardExpense[];
   alarmSettings: AlarmSettings;
+  userAccounts: UserAccount[];
+  activeUserId: string | null;
 }
 
 export const loadStoredData = (): AppState => {
@@ -39,6 +66,8 @@ export const loadStoredData = (): AppState => {
     const rawSources = localStorage.getItem(STORAGE_KEYS.INCOME_SOURCES);
     const rawCC = localStorage.getItem(STORAGE_KEYS.CREDIT_CARD_EXPENSES);
     const rawAlarm = localStorage.getItem(STORAGE_KEYS.ALARM_SETTINGS);
+    const rawAccounts = localStorage.getItem(STORAGE_KEYS.USER_ACCOUNTS);
+    const rawActiveUser = localStorage.getItem(STORAGE_KEYS.ACTIVE_USER_ID);
 
     const transactions: Transaction[] = rawTx ? JSON.parse(rawTx) : INITIAL_TRANSACTIONS;
     const categories: Category[] = rawCat ? JSON.parse(rawCat) : INITIAL_CATEGORIES;
@@ -46,8 +75,10 @@ export const loadStoredData = (): AppState => {
     const incomeSources: IncomeSource[] = rawSources ? JSON.parse(rawSources) : INITIAL_INCOME_SOURCES;
     const creditCardExpenses: CreditCardExpense[] = rawCC ? JSON.parse(rawCC) : INITIAL_CREDIT_CARD_EXPENSES;
     const alarmSettings: AlarmSettings = rawAlarm ? { ...DEFAULT_ALARM_SETTINGS, ...JSON.parse(rawAlarm) } : DEFAULT_ALARM_SETTINGS;
+    const userAccounts: UserAccount[] = rawAccounts ? JSON.parse(rawAccounts) : DEFAULT_USER_ACCOUNTS;
+    const activeUserId: string | null = rawActiveUser !== null ? rawActiveUser : 'usr_eduardo';
 
-    return { transactions, categories, members, incomeSources, creditCardExpenses, alarmSettings };
+    return { transactions, categories, members, incomeSources, creditCardExpenses, alarmSettings, userAccounts, activeUserId };
   } catch (err) {
     console.error('Erro ao ler do localStorage, usando valores padrão:', err);
     return {
@@ -57,6 +88,8 @@ export const loadStoredData = (): AppState => {
       incomeSources: INITIAL_INCOME_SOURCES,
       creditCardExpenses: INITIAL_CREDIT_CARD_EXPENSES,
       alarmSettings: DEFAULT_ALARM_SETTINGS,
+      userAccounts: DEFAULT_USER_ACCOUNTS,
+      activeUserId: 'usr_eduardo',
     };
   }
 };
@@ -69,6 +102,12 @@ export const persistData = (state: AppState): void => {
     localStorage.setItem(STORAGE_KEYS.INCOME_SOURCES, JSON.stringify(state.incomeSources));
     localStorage.setItem(STORAGE_KEYS.CREDIT_CARD_EXPENSES, JSON.stringify(state.creditCardExpenses));
     localStorage.setItem(STORAGE_KEYS.ALARM_SETTINGS, JSON.stringify(state.alarmSettings));
+    localStorage.setItem(STORAGE_KEYS.USER_ACCOUNTS, JSON.stringify(state.userAccounts));
+    if (state.activeUserId) {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_USER_ID, state.activeUserId);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_USER_ID);
+    }
   } catch (err) {
     console.error('Erro ao salvar no localStorage:', err);
   }

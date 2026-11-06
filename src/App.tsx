@@ -10,12 +10,13 @@ import { IncomeSourcesManager } from './components/IncomeSourcesManager';
 import { PaymentConfirmModal } from './components/PaymentConfirmModal';
 import { TransactionModal } from './components/TransactionModal';
 import { ExportImportModal } from './components/ExportImportModal';
-import { AppState, DEFAULT_ALARM_SETTINGS, loadStoredData, persistData, exportCreditCardExpensesAsCSV } from './services/storage';
+import { LoginModal } from './components/LoginModal';
+import { AppState, DEFAULT_ALARM_SETTINGS, DEFAULT_USER_ACCOUNTS, loadStoredData, persistData, exportCreditCardExpensesAsCSV } from './services/storage';
 import { AlarmSettingsModal } from './components/AlarmSettingsModal';
 import { ActiveAlarmBanner } from './components/ActiveAlarmBanner';
 import { CreditCardManager } from './components/CreditCardManager';
 import { playAlarmSound } from './utils/soundAlarm';
-import { AlarmSettings, Category, CreditCardExpense, FamilyMember, IncomeSource, PaymentMethod, Transaction } from './types/finance';
+import { AlarmSettings, Category, CreditCardExpense, FamilyMember, IncomeSource, PaymentMethod, Transaction, UserAccount } from './types/finance';
 import { INITIAL_CATEGORIES, INITIAL_CREDIT_CARD_EXPENSES, INITIAL_INCOME_SOURCES, INITIAL_MEMBERS, INITIAL_TRANSACTIONS } from './data/initialData';
 import { formatBRL, formatMonthYear } from './utils/formatters';
 import { ArrowDownLeft, ArrowUpRight, CheckCircle2, ShieldAlert, Briefcase, Bell, CreditCard } from 'lucide-react';
@@ -59,8 +60,33 @@ export default function App() {
   const [txToConfirmPayment, setTxToConfirmPayment] = useState<Transaction | null>(null);
   const [isExportImportOpen, setIsExportImportOpen] = useState(false);
   const [isAlarmSettingsOpen, setIsAlarmSettingsOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isSessionMuted, setIsSessionMuted] = useState(false);
   const [initialStatusFilter, setInitialStatusFilter] = useState<string>('all');
+
+  // Active User Account: Eduardo Heckler (Admin) or Graciela Heckler (Usuário)
+  const currentUser: UserAccount = useMemo(() => {
+    const accounts = appState.userAccounts || DEFAULT_USER_ACCOUNTS;
+    const found = accounts.find((u) => u.id === appState.activeUserId);
+    return found || accounts[0] || DEFAULT_USER_ACCOUNTS[0];
+  }, [appState.activeUserId, appState.userAccounts]);
+
+  const handleLogin = (account: UserAccount) => {
+    setAppState((prev) => ({
+      ...prev,
+      activeUserId: account.id,
+    }));
+    setIsLoginModalOpen(false);
+  };
+
+  const handleUpdatePin = (userId: string, newPin: string) => {
+    setAppState((prev) => ({
+      ...prev,
+      userAccounts: (prev.userAccounts || DEFAULT_USER_ACCOUNTS).map((u) =>
+        u.id === userId ? { ...u, pin: newPin } : u
+      ),
+    }));
+  };
 
   // Persist whenever state changes
   useEffect(() => {
@@ -449,6 +475,8 @@ export default function App() {
       incomeSources: INITIAL_INCOME_SOURCES,
       creditCardExpenses: INITIAL_CREDIT_CARD_EXPENSES,
       alarmSettings: DEFAULT_ALARM_SETTINGS,
+      userAccounts: DEFAULT_USER_ACCOUNTS,
+      activeUserId: 'usr_eduardo',
     };
     setAppState(demoState);
   };
@@ -474,6 +502,8 @@ export default function App() {
         isDarkMode={isDarkMode}
         onToggleDarkMode={() => setIsDarkMode((prev) => !prev)}
         activeMonthYear={formatMonthYear(currentMonthKey)}
+        currentUser={currentUser}
+        onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -837,6 +867,7 @@ export default function App() {
         appState={appState}
         onImportData={handleImportData}
         onResetToDemo={handleResetToDemo}
+        currentUser={currentUser}
       />
 
       {/* 4. Alarm Settings Modal (Configurações e Período do Alarme Sonoro) */}
@@ -847,6 +878,16 @@ export default function App() {
         onSaveSettings={handleSaveAlarmSettings}
         triggeredBills={triggeredBills}
         onOpenConfirmPayment={(tx) => setTxToConfirmPayment(tx)}
+      />
+
+      {/* 5. User Account & Login Modal (Eduardo - Admin / Graciela - Usuário) */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        currentUser={currentUser}
+        userAccounts={appState.userAccounts || DEFAULT_USER_ACCOUNTS}
+        onLogin={handleLogin}
+        onUpdatePin={handleUpdatePin}
       />
     </div>
   );

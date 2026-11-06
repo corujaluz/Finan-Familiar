@@ -11,6 +11,19 @@ export type PaymentMethod =
   | 'transferencia' 
   | 'debito_automatico';
 
+export type UserRole = 'admin' | 'user';
+
+export interface UserAccount {
+  id: string;
+  username: string; // 'eduardo' | 'graciela'
+  name: string;
+  role: UserRole;
+  memberId: string;
+  pin: string; // PIN ou senha de acesso
+  avatarInitials: string;
+  color: string;
+}
+
 export interface FamilyMember {
   id: string;
   name: string;

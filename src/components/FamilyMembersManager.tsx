@@ -214,9 +214,21 @@ export const FamilyMembersManager: React.FC<FamilyMembersManagerProps> = ({
                       {mem.avatarInitials}
                     </span>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                        {mem.name}
-                      </h3>
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                          {mem.name}
+                        </h3>
+                        {mem.id === 'mem_eduardo' && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                            Login Admin
+                          </span>
+                        )}
+                        {mem.id === 'mem_graciela' && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                            Login Usuário
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         {mem.role}
                       </p>

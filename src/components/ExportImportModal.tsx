@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
-import { X, Download, Upload, RefreshCw, FileSpreadsheet, ShieldAlert } from 'lucide-react';
+import { X, Download, Upload, RefreshCw, FileSpreadsheet, ShieldAlert, ShieldCheck, User } from 'lucide-react';
 import { AppState, exportDataAsJSON, exportTransactionsAsCSV } from '../services/storage';
+import { UserAccount } from '../types/finance';
 
 interface ExportImportModalProps {
   isOpen: boolean;
@@ -8,6 +9,7 @@ interface ExportImportModalProps {
   appState: AppState;
   onImportData: (newState: AppState) => void;
   onResetToDemo: () => void;
+  currentUser?: UserAccount | null;
 }
 
 export const ExportImportModal: React.FC<ExportImportModalProps> = ({
@@ -16,10 +18,13 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
   appState,
   onImportData,
   onResetToDemo,
+  currentUser,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
+
+  const isAdmin = currentUser ? currentUser.role === 'admin' : true;
 
   const handleExportJSON = () => {
     exportDataAsJSON(appState);
@@ -30,6 +35,12 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAdmin) {
+      alert('Ação restrita ao Administrador (Eduardo Heckler). Por favor, alterne para o usuário de Eduardo para restaurar dados.');
+      if (e.target) e.target.value = '';
+      return;
+    }
+
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -52,6 +63,11 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
   };
 
   const handleResetConfirm = () => {
+    if (!isAdmin) {
+      alert('Ação restrita ao Administrador (Eduardo Heckler). Por favor, alterne para o perfil de Eduardo para restaurar os dados de demonstração.');
+      return;
+    }
+
     if (window.confirm('Tem certeza de que deseja restaurar os dados de demonstração da família? Todas as alterações manuais serão resetadas.')) {
       onResetToDemo();
       onClose();
@@ -78,6 +94,33 @@ export const ExportImportModal: React.FC<ExportImportModalProps> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* User status banner */}
+        {currentUser && (
+          <div className="px-6 pt-4 pb-0">
+            <div className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
+              isAdmin
+                ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900/40 text-blue-900 dark:text-blue-200'
+                : 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/40 text-emerald-900 dark:text-emerald-200'
+            }`}>
+              <div className="flex items-center gap-2">
+                {isAdmin ? <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" /> : <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                <span className="font-semibold">Logado como: {currentUser.name}</span>
+              </div>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                isAdmin ? 'bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200'
+              }`}>
+                {isAdmin ? 'Administrador' : 'Usuário'}
+              </span>
+            </div>
+            {!isAdmin && (
+              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1.5 flex items-center gap-1">
+                <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+                Restaurações e reinicialização de dados exigem o perfil Administrador (Eduardo).
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Content */}
         <div className="p-6 space-y-4">

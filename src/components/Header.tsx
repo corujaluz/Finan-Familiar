@@ -1,5 +1,6 @@
 import React from 'react';
-import { Plus, Sun, Moon, Download, Upload, Wallet, Bell } from 'lucide-react';
+import { Plus, Sun, Moon, Download, Upload, Wallet, Bell, Shield, User, LogIn } from 'lucide-react';
+import { UserAccount } from '../types/finance';
 
 interface HeaderProps {
   currentTab: 'overview' | 'transactions' | 'credit_card' | 'income_sources' | 'charts' | 'budgets' | 'members';
@@ -11,6 +12,8 @@ interface HeaderProps {
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
   activeMonthYear: string;
+  currentUser: UserAccount | null;
+  onOpenLogin: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -22,6 +25,8 @@ export const Header: React.FC<HeaderProps> = ({
   alarmAlertCount = 0,
   isDarkMode,
   onToggleDarkMode,
+  currentUser,
+  onOpenLogin,
 }) => {
   return (
     <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
@@ -152,6 +157,44 @@ export const Header: React.FC<HeaderProps> = ({
             >
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
+
+            {/* User Account / Profile Switcher Button */}
+            {currentUser ? (
+              <button
+                onClick={onOpenLogin}
+                title={`Logado como ${currentUser.name} (${currentUser.role === 'admin' ? 'Administrador' : 'Usuário'}). Clique para alternar ou sair.`}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-800/80 transition-colors text-left"
+              >
+                <div
+                  className="w-6 h-6 rounded-md flex items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-2xs"
+                  style={{ backgroundColor: currentUser.color }}
+                >
+                  {currentUser.avatarInitials}
+                </div>
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="text-xs font-semibold text-slate-900 dark:text-white leading-tight">
+                    {currentUser.name.split(' ')[0]}
+                  </span>
+                  <span
+                    className={`text-[9px] font-bold uppercase tracking-wider ${
+                      currentUser.role === 'admin'
+                        ? 'text-blue-600 dark:text-blue-400'
+                        : 'text-emerald-600 dark:text-emerald-400'
+                    }`}
+                  >
+                    {currentUser.role === 'admin' ? 'Admin' : 'Usuário'}
+                  </span>
+                </div>
+              </button>
+            ) : (
+              <button
+                onClick={onOpenLogin}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Entrar</span>
+              </button>
+            )}
 
             <button
               onClick={onOpenNewTransaction}
